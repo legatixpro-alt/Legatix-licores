@@ -1,0 +1,102 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function updateSession(request: NextRequest) {
+  // Clonamos los headers del request para poder inyectar datos en ellos
+  const requestHeaders = new Headers(request.headers)
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => requestHeaders.set(`cookie`, `${name}=${value}`))
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const pathname = request.nextUrl.pathname
+
+  // Rutas públicas sin auth
+  if (!user && (pathname === '/login' || pathname.startsWith('/auth'))) {
+    return supabaseResponse
+  }
+
+  // Redirigir a login si no está autenticado
+  if (!user && pathname !== '/login') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Si está autenticado
+  if (user) {
+    // Obtener rol del usuario
+    const { data: profile } = await supabase
+      .from('usuarios')
+      .select('rol, empresa_id')
+      .eq('id', user.id)
+      .single()
+
+    const rol = profile?.rol || 'cajero'
+
+    // RBAC: Proteger rutas de admin
+    const isCajero = rol === 'cajero'
+    const restrictedPaths = ['/dashboard', '/finanzas', '/reportes', '/configuracion', '/facturacion']
+    
+    // Si el usuario no tiene empresa_id, dejarlo pasar (lo manejará getCurrentUser)
+    if (isCajero && profile?.empresa_id) {
+      // Verificar si intenta entrar a una ruta restringida
+      if (restrictedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/pos' // Enviar al cajero directo al POS
+        return NextResponse.redirect(url)
+      }
+    }
+
+    // Si es cajero y va a '/' redirigir a '/pos' en vez de '/dashboard'
+    if (pathname === '/' || pathname === '/login') {
+      const url = request.nextUrl.clone()
+      url.pathname = isCajero ? '/pos' : '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // ─── OPTIMIZACIÓN: inyectar user_id y rol en headers ───────────────────────────
+    // Los Server Components leen estos headers vía `getCurrentUser()` en
+    // user-context.ts, eliminando la necesidad de llamar auth.getUser()
+    // en cada página/layout. Reducción de ~1 round-trip por navegación.
+    requestHeaders.set('x-user-id', user.id)
+    requestHeaders.set('x-user-email', user.email ?? '')
+    requestHeaders.set('x-user-rol', rol)
+
+    supabaseResponse = NextResponse.next({
+      request: { headers: requestHeaders },
+    })
+    // Replicar cookies en la nueva respuesta
+    request.cookies.getAll().forEach(cookie => {
+      supabaseResponse.cookies.set(cookie.name, cookie.value)
+    })
+    // ────────────────────────────────────────────────────────────────────────
+  }
+
+  return supabaseResponse
+}

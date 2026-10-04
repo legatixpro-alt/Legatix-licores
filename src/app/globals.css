@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Premium Futuristic Dark Theme (Black & Gold) */
+    --background: 240 10% 4%; /* Deep dark */
+    --foreground: 0 0% 95%; /* Off-white for text */
+
+    --card: 240 5% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 5% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Color primario: Dorado Premium */
+    --primary: 43 96% 56%; /* Gold #F5B027 */
+    --primary-foreground: 240 10% 4%; /* Black text on gold */
+
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 75%;
+
+    --accent: 43 96% 56%;
+    --accent-foreground: 240 10% 4%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 43 96% 56%; /* Gold ring */
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Same as root because we force dark mode */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
+    --card: 240 5% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 5% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 43 96% 56%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 75%;
+    --accent: 43 96% 56%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 43 96% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Soft ambient background */
+    background-image: radial-gradient(circle at top right, rgba(245, 176, 39, 0.05) 0%, transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(245, 176, 39, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
+    /* Mobile app feel */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-black/50 backdrop-blur-md border border-white/5 shadow-sm;
+  }
+  
+  .glass-card {
+    @apply bg-zinc-900/60 backdrop-blur-xl border border-white/10 shadow-xl shadow-yellow-500/5 transition-all duration-300 hover:shadow-yellow-500/20 hover:-translate-y-1 hover:border-yellow-500/30;
+  }
+
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600;
+  }
+
+  @keyframes coin-spin {
+    0% { transform: perspective(1000px) rotateY(0deg); }
+    100% { transform: perspective(1000px) rotateY(360deg); }
+  }
+
+  .animate-coin-spin {
+    animation: coin-spin 4s linear infinite;
+    transform-style: preserve-3d;
+  }
+}
