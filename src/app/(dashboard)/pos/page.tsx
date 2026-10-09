@@ -19,33 +19,48 @@ export default async function POSPage() {
 
   const supabase = createClient()
 
-  // Todas las queries en paralelo
-  const [{ data: clientes }, { data: productos }, { data: configFiscal }, { data: categorias }] = await Promise.all([
-    supabase
-      .from('clientes')
-      .select('*')
-      .eq('empresa_id', user.empresa_id)
-      .eq('activo', true)
-      .order('razon_social'),
-    supabase
-      .from('productos')
-      .select('*')
-      .eq('empresa_id', user.empresa_id)
-      .eq('activo', true)
-      .gt('stock_actual', 0)
-      .order('nombre'),
-    supabase
-      .from('config_fiscal')
-      .select('*')
-      .eq('empresa_id', user.empresa_id)
-      .single(),
-    supabase
-      .from('categorias')
-      .select('*')
-      .eq('empresa_id', user.empresa_id)
-      .eq('activo', true)
-      .order('nombre'),
-  ])
+  // Todas las queries en paralelo con manejo de errores para modo Offline
+  let clientes: Cliente[] = []
+  let productos: Producto[] = []
+  let configFiscal: ConfigFiscal | null = null
+  let categorias: Categoria[] = []
+
+  try {
+    const [resClientes, resProductos, resConfig, resCategorias] = await Promise.all([
+      supabase
+        .from('clientes')
+        .select('*')
+        .eq('empresa_id', user.empresa_id)
+        .eq('activo', true)
+        .order('razon_social'),
+      supabase
+        .from('productos')
+        .select('*')
+        .eq('empresa_id', user.empresa_id)
+        .eq('activo', true)
+        .gt('stock_actual', 0)
+        .order('nombre'),
+      supabase
+        .from('config_fiscal')
+        .select('*')
+        .eq('empresa_id', user.empresa_id)
+        .single(),
+      supabase
+        .from('categorias')
+        .select('*')
+        .eq('empresa_id', user.empresa_id)
+        .eq('activo', true)
+        .order('nombre'),
+    ])
+    
+    clientes = resClientes.data as Cliente[] || []
+    productos = resProductos.data as Producto[] || []
+    configFiscal = resConfig.data as ConfigFiscal || null
+    categorias = resCategorias.data as Categoria[] || []
+  } catch (error) {
+    console.error('Error cargando datos del POS (Posiblemente Offline):', error)
+    // Dejar arreglos vacíos. POSClient intentará hidratar desde IndexedDB.
+  }
 
   if (!configFiscal) {
     return (

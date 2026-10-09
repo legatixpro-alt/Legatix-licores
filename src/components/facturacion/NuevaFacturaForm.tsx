@@ -21,7 +21,7 @@ import {
   calcularItemFiscal, calcularFacturaFiscal,
   formatUSD, formatVES, monedaActivaIgtf
 } from '@/lib/fiscal'
-import { getTasaBcv } from '@/app/actions/bcv'
+import { getTasaBcv, forceSyncTasaBcv } from '@/app/actions/bcv'
 import { cn } from 'cn'
 
 interface Props {
@@ -70,6 +70,15 @@ export function NuevaFacturaForm({ clientes, productos, configFiscal, empresaId,
   const fetchBcvRate = async () => {
     setIsFetchingBcv(true)
     const res = await getTasaBcv()
+    if (res.success && res.tasa) {
+      setTasaBcv(res.tasa)
+    }
+    setIsFetchingBcv(false)
+  }
+
+  const handleForceSync = async () => {
+    setIsFetchingBcv(true)
+    const res = await forceSyncTasaBcv()
     if (res.success && res.tasa) {
       setTasaBcv(res.tasa)
     }
@@ -351,7 +360,7 @@ export function NuevaFacturaForm({ clientes, productos, configFiscal, empresaId,
                   Tasa BCV (Bs./USD) *
                   <button
                     type="button"
-                    onClick={fetchBcvRate}
+                    onClick={handleForceSync}
                     disabled={isFetchingBcv}
                     className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-colors disabled:opacity-50"
                     title="Actualizar Tasa BCV Oficial"

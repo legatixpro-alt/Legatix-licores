@@ -102,7 +102,7 @@ export default function FinanzasClient({
                 <CardContent className="p-0">
                   <div className="text-2xl font-bold text-foreground">
                     {formatUSD(
-                      cxcFacturas.reduce((acc, f) => acc + (f.total_usd - f.pagos.reduce((pAcc, p) => pAcc + p.monto, 0)), 0)
+                      cxcFacturas.reduce((acc, f) => acc + (f.total_usd - f.pagos.reduce((pAcc: number, p: any) => pAcc + p.monto, 0)), 0)
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{cxcFacturas.length} facturas pendientes</p>
@@ -134,7 +134,7 @@ export default function FinanzasClient({
                       </tr>
                     ) : (
                       cxcFacturas.map((f) => {
-                        const abonado = f.pagos.reduce((acc, p) => acc + p.monto, 0)
+                        const abonado = f.pagos.reduce((acc: number, p: any) => acc + p.monto, 0)
                         const saldo = Math.max(0, f.total_usd - abonado)
                         
                         return (

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { LogOut, Home, Box, ShoppingCart, FileText, Settings, BarChart2, Users, Wallet } from 'lucide-react'
 import { ReactNode } from 'react'
 import { NavItem } from '@/components/layout/NavItem'
+import { OfflineBadge } from '@/components/layout/OfflineBadge'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser()
@@ -14,7 +15,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const role = user.rol
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden relative">
+      <OfflineBadge />
       {/* Sidebar - Desktop Only */}
       <aside className="hidden md:flex w-64 flex-col flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-xl">
         <div className="flex h-20 items-center justify-center gap-3 border-b border-border px-6">

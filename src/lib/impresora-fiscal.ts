@@ -103,5 +103,27 @@ export const impresoraFiscal = {
         mensaje: 'No se pudo establecer conexión con la impresora fiscal. Verifique que el servicio esté corriendo o el cable conectado.'
       }
     }
+  },
+
+  /**
+   * Emite el Reporte Z de la impresora fiscal (Cierre Diario)
+   */
+  async imprimirReporteZ(): Promise<FiscalPrintResult> {
+    console.log('📦 ENVIANDO COMANDO DE REPORTE Z A IMPRESORA FISCAL')
+    
+    try {
+      // Simulación
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      return {
+        exito: true,
+        mensaje: 'Reporte Z impreso correctamente. Memoria fiscal totalizada.'
+      }
+    } catch (error) {
+      return {
+        exito: false,
+        mensaje: 'Error de conexión con la impresora fiscal.'
+      }
+    }
   }
 }

@@ -3,16 +3,20 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { usePOSStore } from '@/store/posStore'
 import { Button } from '@/components/ui/button'
-import { Trash2, Plus, Minus, Zap, UserCircle, ShoppingCart, AlertCircle, ChevronDown, RefreshCw } from 'lucide-react'
+import { Trash2, Plus, Minus, Zap, UserCircle, ShoppingCart, AlertCircle, ChevronDown, RefreshCw, Lock } from 'lucide-react'
 import { Cliente, ConfigFiscal, MonedaPago } from '@/types/facturacion.types'
 import { calcularFacturaFiscal, formatUSD, formatVES } from '@/lib/fiscal'
 import { useRouter } from 'next/navigation'
 import { emitirFacturaPOS } from '@/app/actions/facturacion'
-import { getTasaBcv } from '@/app/actions/bcv'
+import { getTasaBcv, forceSyncTasaBcv } from '@/app/actions/bcv'
 import { impresoraFiscal } from '@/lib/impresora-fiscal'
+import { enqueueAction } from '@/lib/offline-db'
+import { useNetwork } from '@/hooks/use-network'
+import { processSyncQueue } from '@/lib/sync-manager'
 import { cn } from 'cn'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogOverlay, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { CierreCajaModal } from './CierreCajaModal'
 
 interface Props {
   clientes: Cliente[]
@@ -45,6 +49,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
   
   // Modal State
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false)
+  const [cierreCajaOpen, setCierreCajaOpen] = useState(false)
   const [pagoMontoIn, setPagoMontoIn] = useState('')
   const [pagoMetodoIn, setPagoMetodoIn] = useState('EFECTIVO_BS')
 
@@ -52,6 +57,15 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
   const aplicaIgtf = false;
 
   const router = useRouter()
+  
+  const { isOnline, pendingCount, refreshQueueCount } = useNetwork()
+
+  // Sincronizar al volver online
+  useEffect(() => {
+    if (isOnline) {
+      processSyncQueue().then(() => refreshQueueCount())
+    }
+  }, [isOnline, refreshQueueCount])
 
   const [clientSearch, setClientSearch] = useState('')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
@@ -96,6 +110,15 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
   const fetchBcvRate = async () => {
     setIsFetchingBcv(true)
     const res = await getTasaBcv()
+    if (res.success && res.tasa) {
+      setTasaBcv(res.tasa)
+    }
+    setIsFetchingBcv(false)
+  }
+
+  const handleForceSync = async () => {
+    setIsFetchingBcv(true)
+    const res = await forceSyncTasaBcv()
     if (res.success && res.tasa) {
       setTasaBcv(res.tasa)
     }
@@ -167,11 +190,22 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
         }))
       }
 
-      const res = await emitirFacturaPOS(payload)
-      
-      if (!res.success) {
-        setErrorMsg("Error: " + res.error)
-        return
+      let facturaIdRes = 'offline-' + Date.now()
+
+      if (!isOnline) {
+        // MODO OFFLINE
+        await enqueueAction('pos_checkout', payload)
+        refreshQueueCount()
+        console.log("Guardado localmente por modo offline.")
+      } else {
+        // MODO ONLINE
+        const res = await emitirFacturaPOS(payload)
+        
+        if (!res.success) {
+          setErrorMsg("Error: " + res.error)
+          return
+        }
+        facturaIdRes = res.factura_id || facturaIdRes
       }
       
       const clienteData = clienteId 
@@ -179,7 +213,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
         : { razon_social: 'CONSUMIDOR FINAL', tipo_doc: 'V', numero_doc: '00000000', direccion_fiscal: '', telefono: '' }
         
       impresoraFiscal.imprimirFactura(
-        { numero_factura: res.factura_id, fecha_emision: new Date().toISOString(), tasa_bcv: tasaBcv, moneda_principal: 'VES', aplica_igtf: false, monto_igtf: 0 } as any,
+        { numero_factura: facturaIdRes, fecha_emision: new Date().toISOString(), tasa_bcv: tasaBcv, moneda_principal: 'VES', aplica_igtf: false, monto_igtf: 0 } as any,
         items as any,
         clienteData as any,
         configFiscal
@@ -192,13 +226,18 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
       })
       
       clearCart()
-      setAplicaIgtf(false)
       setCheckoutModalOpen(false)
       
       if (condicionPago === 'CREDITO') {
         router.push(`/finanzas?tab=cxc`)
       } else {
-        router.push(`/facturacion/${res.factura_id}`)
+        if (isOnline) {
+          router.push(`/facturacion/${facturaIdRes}`)
+        } else {
+          // Si estamos offline, no podemos ir a la vista de factura en el server
+          alert("Factura guardada localmente. Revise la cola de sincronización.")
+          router.refresh()
+        }
       }
     } catch (e) {
       console.error(e)
@@ -209,7 +248,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* ── Header ─────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2">
@@ -223,16 +262,31 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
             </p>
           </div>
         </div>
-        {items.length > 0 && (
+        <div className="flex items-center gap-2">
+          {items.length > 0 && (
+            <button
+              onClick={clearCart}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1 rounded-md hover:bg-destructive/10"
+              title="Vaciar carrito"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
-            onClick={clearCart}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1 rounded-md hover:bg-destructive/10"
+            onClick={() => setCierreCajaOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 transition-colors px-3 py-1.5 rounded-md"
+            title="Cerrar Caja (Reporte Z)"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Vaciar
+            <Lock className="h-3.5 w-3.5" />
+            Cerrar Turno
           </button>
-        )}
+        </div>
       </div>
+      
+      <CierreCajaModal 
+        open={cierreCajaOpen} 
+        onClose={() => setCierreCajaOpen(false)} 
+      />
 
       {/* ── Cliente selector ───────────────────────── */}
       <div className="px-5 py-3 border-b border-border bg-muted/20">
@@ -369,7 +423,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
         <div className="flex items-center justify-between text-xs pb-2 mb-2 border-b border-border/50">
           <div className="flex items-center gap-1.5">
             <button
-              onClick={fetchBcvRate}
+              onClick={handleForceSync}
               disabled={isFetchingBcv}
               className="p-1 rounded bg-secondary hover:bg-secondary/80 text-foreground transition-colors disabled:opacity-50"
               title="Actualizar Tasa BCV Oficial"

@@ -51,20 +51,31 @@ export async function updateSession(request: NextRequest) {
   // Si está autenticado
   if (user) {
     // Obtener rol del usuario
-    const { data: profile } = await supabase
-      .from('usuarios')
-      .select('rol, empresa_id')
-      .eq('id', user.id)
-      .single()
+    let rol = 'cajero'
+    let userEmpresaId = null
 
-    const rol = profile?.rol || 'cajero'
+    try {
+      const { data: profile } = await supabase
+        .from('usuarios')
+        .select('rol, empresa_id')
+        .eq('id', user.id)
+        .single()
+      
+      if (profile) {
+        rol = profile.rol || 'cajero'
+        userEmpresaId = profile.empresa_id
+      }
+    } catch (err) {
+      // Si estamos offline, el fetch falla. Asumimos rol básico para no bloquear el acceso al POS.
+      console.log('Error middleware offline, asumiendo rol cajero')
+    }
 
     // RBAC: Proteger rutas de admin
     const isCajero = rol === 'cajero'
     const restrictedPaths = ['/dashboard', '/finanzas', '/reportes', '/configuracion', '/facturacion']
     
     // Si el usuario no tiene empresa_id, dejarlo pasar (lo manejará getCurrentUser)
-    if (isCajero && profile?.empresa_id) {
+    if (isCajero && userEmpresaId) {
       // Verificar si intenta entrar a una ruta restringida
       if (restrictedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))) {
         const url = request.nextUrl.clone()

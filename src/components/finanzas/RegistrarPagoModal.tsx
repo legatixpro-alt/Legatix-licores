@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatUSD } from '@/lib/fiscal'
-import { getTasaBcv } from '@/app/actions/bcv'
+import { getTasaBcv, forceSyncTasaBcv } from '@/app/actions/bcv'
+import { registrarPago } from '@/app/actions/pagos'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { cn } from 'cn'
 
@@ -35,6 +36,19 @@ export function RegistrarPagoModal({ isOpen, onClose, facturaId, numeroFactura, 
     if (res.success && res.tasa) {
       setTasaBcvHoy(res.tasa)
       // Si el método seleccionado es VES, recalculamos el monto precargado en Bs
+      const isBs = !['EFECTIVO_USD', 'ZELLE'].includes(metodo)
+      if (isBs) {
+        setMontoIngresado(Number((saldoPendiente * res.tasa).toFixed(2)))
+      }
+    }
+    setIsFetchingBcv(false)
+  }
+
+  const handleForceSync = async () => {
+    setIsFetchingBcv(true)
+    const res = await forceSyncTasaBcv()
+    if (res.success && res.tasa) {
+      setTasaBcvHoy(res.tasa)
       const isBs = !['EFECTIVO_USD', 'ZELLE'].includes(metodo)
       if (isBs) {
         setMontoIngresado(Number((saldoPendiente * res.tasa).toFixed(2)))
@@ -129,7 +143,7 @@ export function RegistrarPagoModal({ isOpen, onClose, facturaId, numeroFactura, 
               <span className="text-sm font-bold text-primary">Bs. {tasaBcvHoy}</span>
               <button 
                 type="button" 
-                onClick={fetchBcv} 
+                onClick={handleForceSync} 
                 disabled={isFetchingBcv}
                 className="p-1 rounded-md hover:bg-secondary/80 text-muted-foreground transition-colors"
                 title="Actualizar Tasa BCV Oficial"

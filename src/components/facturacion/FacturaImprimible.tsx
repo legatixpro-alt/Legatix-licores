@@ -30,7 +30,7 @@ export function FacturaImprimible({ factura, empresa, config }: Props) {
       {/* Estilos específicos de impresión */}
       <style>{`
         @page {
-          size: 80mm auto;
+          size: 58mm auto;
           margin: 0;
         }
         @media print {
@@ -40,10 +40,10 @@ export function FacturaImprimible({ factura, empresa, config }: Props) {
         }
         body {
           font-family: 'Courier New', Courier, monospace;
-          font-size: 9pt;
+          font-size: 8pt;
           color: #000;
           background: white;
-          width: 80mm;
+          width: 58mm;
           margin: 0;
           padding: 0;
         }

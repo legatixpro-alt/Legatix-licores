@@ -1,30 +1,51 @@
 'use server'
 
+import { sincronizarTasaBcv, obtenerUltimaTasaBcv } from '@/lib/bcv-service'
+
 /**
- * Obtiene la tasa oficial del Banco Central de Venezuela (BCV).
- * Utiliza una API comunitaria estable ya que el portal oficial bloquea
- * frecuentemente las peticiones automatizadas.
+ * Intenta obtener la tasa más reciente de la BD.
+ * Si no hay ninguna o es muy vieja (opcional), intenta sincronizar en vivo.
+ * Esta función es la que llaman los componentes del cliente (POS, Nueva Factura).
  */
-export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; error?: string }> {
-  try {
-    const response = await fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar/page?page=bcv', {
-      next: { revalidate: 3600 }, // Revalidar cache cada hora
-    })
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; fecha_valor?: string; error?: string }> {
+  // 1. Intentar leer de la BD
+  const bdRes = await obtenerUltimaTasaBcv()
+  
+  if (bdRes.success && bdRes.tasa) {
+    // Aquí podríamos verificar si la fecha_valor es muy antigua,
+    // pero para evitar saturar al BCV en cada render, simplemente retornamos la guardada.
+    // La actualización se hará manualmente con forceSyncTasaBcv() o vía un Cron diario.
+    return { 
+      success: true, 
+      tasa: bdRes.tasa,
+      fecha_valor: bdRes.fecha_valor
     }
-    
-    const data = await response.json()
-    
-    // La API devuelve un objeto con "monitors" y dentro "usd"
-    if (data && data.monitors && data.monitors.usd && data.monitors.usd.price) {
-      return { success: true, tasa: parseFloat(data.monitors.usd.price) }
-    }
-    
-    return { success: false, error: 'Formato de respuesta inesperado de la API' }
-  } catch (error) {
-    console.error('Error fetching BCV rate:', error)
-    return { success: false, error: 'No se pudo conectar con el servidor para obtener la tasa BCV' }
   }
+
+  // 2. Si no hay nada en la BD o falló (ej. tabla vacía), sincronizamos en vivo
+  console.log('[BCV] No hay tasa local, sincronizando en vivo como fallback...')
+  const syncRes = await sincronizarTasaBcv()
+  
+  if (syncRes.success && syncRes.tasa) {
+    return {
+      success: true,
+      tasa: syncRes.tasa,
+      fecha_valor: syncRes.fecha_valor
+    }
+  }
+
+  // 3. Fallback absoluto en caso de que todo falle y el sistema deba funcionar
+  return { 
+    success: false, 
+    error: syncRes.error || 'No se pudo obtener la tasa BCV',
+    tasa: 36.5 // Fallback de emergencia, aunque el UI debería permitir editar
+  }
+}
+
+/**
+ * Fuerza una sincronización inmediata contra los servidores del BCV.
+ * Llamar desde un botón de "Actualizar Tasa" o desde un Cron.
+ */
+export async function forceSyncTasaBcv() {
+  return await sincronizarTasaBcv()
 }

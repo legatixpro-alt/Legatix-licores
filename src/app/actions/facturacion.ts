@@ -144,7 +144,7 @@ export async function anularFactura(facturaId: string, motivo: string) {
     observaciones: `Anulación de factura ${original.numero_factura}. Motivo: ${motivo}`
   }
   
-  const payloadItems = original.items.map(i => ({
+  const payloadItems = original.items.map((i: any) => ({
     producto_id: i.producto_id,
     descripcion: i.descripcion,
     codigo_sku: i.codigo_sku,

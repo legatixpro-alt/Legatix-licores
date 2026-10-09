@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Producto, Categoria } from '@/types/inventario.types'
 import { Cliente, ConfigFiscal } from '@/types/facturacion.types'
 import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 import { Search, Package, ScanLine } from 'lucide-react'
 import { ProductGrid } from './ProductGrid'
 import { CartPanel } from './CartPanel'
@@ -23,10 +24,104 @@ const CATEGORIAS_UNICAS = (productos: Producto[]) => {
   return Array.from(cats)
 }
 
-export function POSClient({ initialProducts, categorias = [], clientes, configFiscal, empresaId, userId }: Props) {
+export function POSClient({ initialProducts: serverProducts, categorias: serverCategorias = [], clientes: serverClientes, configFiscal: serverConfig, empresaId, userId }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  
+  // Local state for hydration
+  const [initialProducts, setInitialProducts] = useState<Producto[]>(serverProducts)
+  const [categorias, setCategorias] = useState<Categoria[]>(serverCategorias)
+  const [clientes, setClientes] = useState<Cliente[]>(serverClientes)
+  const [configFiscal, setConfigFiscal] = useState<ConfigFiscal | null>(serverConfig)
+
   const itemCount = usePOSStore(state => state.items.length)
+  const addItem = usePOSStore(state => state.addItem)
+
+  // 1. Guardar en IndexedDB si viene data del servidor
+  // 2. Leer de IndexedDB si el servidor devuelve arrays vacíos (Offline)
+  useEffect(() => {
+    const syncLocalCache = async () => {
+      try {
+        const { getSyncQueue } = await import('@/lib/offline-db') // Re-use the DB init logic
+        const db = await (await import('@/lib/offline-db')).initDB()
+        const tx = db.transaction('sync_queue', 'readwrite') // we can just use another store later, but for now let's just use localStorage for simplicity
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    // Si Server Component logró traer data (Online)
+    if (serverProducts.length > 0) {
+      localStorage.setItem('pos_cache_productos', JSON.stringify(serverProducts))
+      localStorage.setItem('pos_cache_categorias', JSON.stringify(serverCategorias))
+      localStorage.setItem('pos_cache_clientes', JSON.stringify(serverClientes))
+      localStorage.setItem('pos_cache_config', JSON.stringify(serverConfig))
+    } else {
+      // Si vinieron vacíos, tratamos de recuperar de localStorage (Offline Mode)
+      try {
+        const p = localStorage.getItem('pos_cache_productos')
+        if (p) setInitialProducts(JSON.parse(p))
+        
+        const cat = localStorage.getItem('pos_cache_categorias')
+        if (cat) setCategorias(JSON.parse(cat))
+        
+        const cli = localStorage.getItem('pos_cache_clientes')
+        if (cli) setClientes(JSON.parse(cli))
+        
+        const conf = localStorage.getItem('pos_cache_config')
+        if (conf) setConfigFiscal(JSON.parse(conf))
+      } catch(e) {
+        console.error("No se pudo recuperar la caché offline", e)
+      }
+    }
+  }, [serverProducts, serverCategorias, serverClientes, serverConfig])
+
+  // Lógica del Lector de Código de Barras (Pistola)
+
+  useEffect(() => {
+    let barcode = ''
+    let lastKeyTime = Date.now()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Evitar interceptar si está escribiendo normal, a menos que sea muy rápido (escáner)
+      const currentTime = Date.now()
+      
+      if (currentTime - lastKeyTime > 50) {
+        barcode = '' // Reiniciar si es tipeo humano lento
+      }
+      
+      lastKeyTime = currentTime
+
+      if (e.key === 'Enter') {
+        if (barcode.length >= 4) { // Asumimos que los SKU/Códigos tienen al menos 4 caracteres
+          e.preventDefault() // Evitar submit de formularios
+          
+          const match = initialProducts.find(p => 
+            p.codigo_sku?.toLowerCase() === barcode.toLowerCase()
+          )
+          
+          if (match) {
+            addItem(match)
+            toast.success(`Añadido: ${match.nombre}`, { duration: 1500, position: 'top-center' })
+            // Limpiar buscador si estaba enfocado ahí
+            const searchInput = document.getElementById('pos-search') as HTMLInputElement
+            if (searchInput) searchInput.value = ''
+            setSearchTerm('')
+          } else {
+            toast.error(`Producto no encontrado con el código: ${barcode}`, { position: 'top-center' })
+          }
+          barcode = ''
+        }
+      } else if (e.key.length === 1) { // Solo caracteres normales
+        barcode += e.key
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [initialProducts, addItem])
 
   const filteredProducts = initialProducts.filter(p => {
     const matchSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())
@@ -143,12 +238,14 @@ export function POSClient({ initialProducts, categorias = [], clientes, configFi
       {/* ── Cart sidebar ──────────────────────────────── */}
       <div className="w-full lg:w-[380px] xl:w-[420px] flex-shrink-0 order-2 flex flex-col max-h-[80vh] lg:max-h-full">
         <div className="flex-1 rounded-xl border border-border bg-card shadow-xl shadow-black/30 overflow-hidden flex flex-col">
-          <CartPanel
-            clientes={clientes}
-            configFiscal={configFiscal}
-            empresaId={empresaId}
-            userId={userId}
-          />
+          {configFiscal && (
+            <CartPanel
+              clientes={clientes}
+              configFiscal={configFiscal}
+              empresaId={empresaId}
+              userId={userId}
+            />
+          )}
         </div>
       </div>
 
