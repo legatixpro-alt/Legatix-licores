@@ -18,6 +18,7 @@ interface Props {
   empresaId: string
   userId: string
   turnoActivoId?: string | null
+  initialBcvRate?: number
 }
 
 const CATEGORIAS_UNICAS = (productos: Producto[]) => {
@@ -25,7 +26,7 @@ const CATEGORIAS_UNICAS = (productos: Producto[]) => {
   return Array.from(cats)
 }
 
-export function POSClient({ initialProducts: serverProducts, categorias: serverCategorias = [], clientes: serverClientes, configFiscal: serverConfig, empresaId, userId, turnoActivoId }: Props) {
+export function POSClient({ initialProducts: serverProducts, categorias: serverCategorias = [], clientes: serverClientes, configFiscal: serverConfig, empresaId, userId, turnoActivoId, initialBcvRate = 40 }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   
