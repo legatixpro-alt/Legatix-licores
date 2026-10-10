@@ -17,6 +17,7 @@ interface Props {
   configFiscal: ConfigFiscal
   empresaId: string
   userId: string
+  turnoActivoId?: string | null
 }
 
 const CATEGORIAS_UNICAS = (productos: Producto[]) => {
@@ -24,11 +25,13 @@ const CATEGORIAS_UNICAS = (productos: Producto[]) => {
   return Array.from(cats)
 }
 
-export function POSClient({ initialProducts: serverProducts, categorias: serverCategorias = [], clientes: serverClientes, configFiscal: serverConfig, empresaId, userId }: Props) {
+export function POSClient({ initialProducts: serverProducts, categorias: serverCategorias = [], clientes: serverClientes, configFiscal: serverConfig, empresaId, userId, turnoActivoId }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   
   // Local state for hydration
+  const [turnoAbierto, setTurnoAbierto] = useState(!!turnoActivoId)
+  const [currentTurnoId, setCurrentTurnoId] = useState(turnoActivoId)
   const [initialProducts, setInitialProducts] = useState<Producto[]>(serverProducts)
   const [categorias, setCategorias] = useState<Categoria[]>(serverCategorias)
   const [clientes, setClientes] = useState<Cliente[]>(serverClientes)
@@ -123,6 +126,20 @@ export function POSClient({ initialProducts: serverProducts, categorias: serverC
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [initialProducts, addItem])
 
+  const handleVentaExitosa = (vendidos: any[]) => {
+    setInitialProducts(prev => {
+      const next = prev.map(p => {
+        const vendido = vendidos.find(v => v.producto.id === p.id)
+        if (vendido) {
+          return { ...p, stock_actual: p.stock_actual - vendido.cantidad }
+        }
+        return p
+      })
+      localStorage.setItem('pos_cache_productos', JSON.stringify(next))
+      return next
+    })
+  }
+
   const filteredProducts = initialProducts.filter(p => {
     const matchSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -141,7 +158,7 @@ export function POSClient({ initialProducts: serverProducts, categorias: serverC
 
   return (
     <div className="flex flex-col lg:flex-row h-full min-h-[calc(100vh-12rem)] lg:h-[calc(100vh-5rem)] gap-4 lg:-m-6 lg:p-4">
-
+      <AperturaCajaModal open={!turnoAbierto} empresaId={empresaId} onSuccess={(id) => { setCurrentTurnoId(id); setTurnoAbierto(true); }} />
       {/* ── Products zone ─────────────────────────────── */}
       <div className="flex-1 flex flex-col gap-3 min-h-[300px] lg:overflow-hidden order-1">
         
@@ -244,6 +261,8 @@ export function POSClient({ initialProducts: serverProducts, categorias: serverC
               configFiscal={configFiscal}
               empresaId={empresaId}
               userId={userId}
+              turnoId={currentTurnoId || undefined}
+              onVentaExitosa={handleVentaExitosa}
             />
           )}
         </div>
@@ -252,3 +271,4 @@ export function POSClient({ initialProducts: serverProducts, categorias: serverC
     </div>
   )
 }
+import { AperturaCajaModal } from './AperturaCajaModal'

@@ -23,9 +23,11 @@ interface Props {
   configFiscal: ConfigFiscal
   empresaId: string
   userId: string
+  turnoId?: string
+  onVentaExitosa?: (items: any[]) => void
 }
 
-export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) {
+export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, onVentaExitosa }: Props) {
   const { 
     items, 
     removeItem, 
@@ -173,6 +175,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
         empresa_id: empresaId,
         cliente_id: clienteId,
         usuario_id: userId,
+        turno_id: turnoId,
         condicion_pago: condicionPago,
         moneda_principal: 'VES' as MonedaPago,
         tasa_bcv: tasaBcv,
@@ -227,6 +230,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
       
       clearCart()
       setCheckoutModalOpen(false)
+      onVentaExitosa?.(items)
       
       if (condicionPago === 'CREDITO') {
         router.push(`/finanzas?tab=cxc`)

@@ -47,16 +47,13 @@ export default function LoginPage() {
           {/* El resplandor (Glow) detrás del logo */}
           <div className="absolute inset-0 m-auto w-32 h-32 bg-primary/40 rounded-full blur-2xl animate-pulse" />
           
-          {/* El Logo recortado (solo la moneda) */}
-          <div className="relative w-32 h-32 rounded-full overflow-hidden shadow-[0_0_40px_rgba(245,176,39,0.3)] border-2 border-primary/20 bg-black">
+          {/* El Logo recortado (solo la moneda sin fondo) */}
+          <div className="relative w-32 h-32 rounded-full overflow-hidden shadow-[0_0_40px_rgba(245,176,39,0.3)] border-2 border-primary/20 bg-transparent flex items-center justify-center p-1">
             <Image 
-              src="/logo-legatix.jpg"
+              src="/icon-512x512.png"
               alt="Logo Legatix"
               fill
-              className="object-cover scale-[1.05]"
-              style={{
-                clipPath: 'circle(48% at 50% 50%)'
-              }}
+              className="object-contain"
               priority
             />
           </div>

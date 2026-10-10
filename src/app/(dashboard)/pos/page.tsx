@@ -24,9 +24,10 @@ export default async function POSPage() {
   let productos: Producto[] = []
   let configFiscal: ConfigFiscal | null = null
   let categorias: Categoria[] = []
+  let turnoActivoId: string | null = null
 
   try {
-    const [resClientes, resProductos, resConfig, resCategorias] = await Promise.all([
+    const [resClientes, resProductos, resConfig, resCategorias, resTurno] = await Promise.all([
       supabase
         .from('clientes')
         .select('*')
@@ -51,12 +52,19 @@ export default async function POSPage() {
         .eq('empresa_id', user.empresa_id)
         .eq('activo', true)
         .order('nombre'),
+      supabase
+        .from('cajas_turnos')
+        .select('id')
+        .eq('usuario_id', user.id)
+        .eq('estatus', 'ABIERTO')
+        .maybeSingle()
     ])
     
     clientes = resClientes.data as Cliente[] || []
     productos = resProductos.data as Producto[] || []
     configFiscal = resConfig.data as ConfigFiscal || null
     categorias = resCategorias.data as Categoria[] || []
+    turnoActivoId = resTurno.data?.id || null
   } catch (error) {
     console.error('Error cargando datos del POS (Posiblemente Offline):', error)
     // Dejar arreglos vacíos. POSClient intentará hidratar desde IndexedDB.
@@ -91,6 +99,7 @@ export default async function POSPage() {
         configFiscal={configFiscal as ConfigFiscal}
         empresaId={user.empresa_id}
         userId={user.id}
+        turnoActivoId={turnoActivoId}
       />
     </div>
   )

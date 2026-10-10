@@ -47,48 +47,50 @@ export function ProductoFormDialog({ open, onOpenChange, empresaId, initialProdu
   })
 
   useEffect(() => {
-    if (initialProduct && open) {
-      reset({
-        codigo_sku: initialProduct.codigo_sku,
-        nombre: initialProduct.nombre,
-        descripcion: initialProduct.descripcion || '',
-        categoria_id: initialProduct.categoria_id || null,
-        proveedor_id: initialProduct.proveedor_id || null,
-        unidad_medida: initialProduct.unidad_medida || 'UNIDAD',
-        precio_costo: initialProduct.precio_costo || 0,
-        precio_venta: initialProduct.precio_venta || 0,
-        precio_venta_usd: initialProduct.precio_venta_usd || 0,
-        stock_actual: initialProduct.stock_actual || 0,
-        stock_minimo: initialProduct.stock_minimo || 5,
-        es_licor: initialProduct.es_licor || false,
-        es_promo: initialProduct.es_promo || false,
-        volumen_litros: initialProduct.volumen_litros || null,
-        grado_alcoholico: initialProduct.grado_alcoholico || null,
-        gravado_iva: initialProduct.gravado_iva ?? true,
-        alicuota_iva: initialProduct.alicuota_iva || 16,
-        activo: initialProduct.activo ?? true
-      })
-    } else if (!initialProduct && open) {
-      reset({
-        codigo_sku: '',
-        nombre: '',
-        descripcion: '',
-        categoria_id: null,
-        proveedor_id: null,
-        unidad_medida: 'UNIDAD',
-        precio_costo: 0,
-        precio_venta: 0,
-        precio_venta_usd: 0,
-        stock_actual: 0,
-        stock_minimo: 5,
-        es_licor: false,
-        es_promo: false,
-        volumen_litros: null,
-        grado_alcoholico: null,
-        gravado_iva: true,
-        alicuota_iva: 16,
-        activo: true
-      })
+    if (open) {
+      if (initialProduct) {
+        reset({
+          codigo_sku: initialProduct.codigo_sku || '',
+          nombre: initialProduct.nombre || '',
+          descripcion: initialProduct.descripcion || '',
+          categoria_id: initialProduct.categoria_id || null,
+          proveedor_id: initialProduct.proveedor_id || null,
+          unidad_medida: initialProduct.unidad_medida || 'UNIDAD',
+          precio_costo: initialProduct.precio_costo || 0,
+          precio_venta: initialProduct.precio_venta || 0,
+          precio_venta_usd: initialProduct.precio_venta_usd || 0,
+          stock_actual: initialProduct.stock_actual || 0,
+          stock_minimo: initialProduct.stock_minimo || 5,
+          es_licor: initialProduct.es_licor || false,
+          es_promo: initialProduct.es_promo || false,
+          volumen_litros: initialProduct.volumen_litros || null,
+          grado_alcoholico: initialProduct.grado_alcoholico || null,
+          gravado_iva: initialProduct.gravado_iva ?? true,
+          alicuota_iva: initialProduct.alicuota_iva || 16,
+          activo: initialProduct.activo ?? true
+        })
+      } else {
+        reset({
+          codigo_sku: '',
+          nombre: '',
+          descripcion: '',
+          categoria_id: null,
+          proveedor_id: null,
+          unidad_medida: 'UNIDAD',
+          precio_costo: 0,
+          precio_venta: 0,
+          precio_venta_usd: 0,
+          stock_actual: 0,
+          stock_minimo: 5,
+          es_licor: false,
+          es_promo: false,
+          volumen_litros: null,
+          grado_alcoholico: null,
+          gravado_iva: true,
+          alicuota_iva: 16,
+          activo: true
+        })
+      }
     }
   }, [initialProduct, open, reset])
 
@@ -131,12 +133,17 @@ export function ProductoFormDialog({ open, onOpenChange, empresaId, initialProdu
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) reset()
+      onOpenChange(val)
+    }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nuevo Producto</DialogTitle>
+          <DialogTitle>{initialProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
           <DialogDescription>
-            Añade un nuevo producto al inventario. Completa los detalles a continuación.
+            {initialProduct 
+              ? 'Modifica los detalles del producto a continuación.' 
+              : 'Añade un nuevo producto al inventario. Completa los detalles a continuación.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -221,7 +228,7 @@ export function ProductoFormDialog({ open, onOpenChange, empresaId, initialProdu
           <div className="pt-4 flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading} className="bg-black text-white hover:bg-gray-800">
-              {loading ? 'Guardando...' : 'Guardar Producto'}
+              {loading ? 'Guardando...' : (initialProduct ? 'Actualizar Producto' : 'Guardar Producto')}
             </Button>
           </div>
         </form>

@@ -12,9 +12,24 @@ export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; f
   const bdRes = await obtenerUltimaTasaBcv()
   
   if (bdRes.success && bdRes.tasa) {
-    // Aquí podríamos verificar si la fecha_valor es muy antigua,
-    // pero para evitar saturar al BCV en cada render, simplemente retornamos la guardada.
-    // La actualización se hará manualmente con forceSyncTasaBcv() o vía un Cron diario.
+    // Validar si la tasa fue obtenida hoy. Si es vieja, forzamos sincronización automática
+    const hoyStr = new Date().toISOString().split('T')[0]
+    const obtenidaEnStr = bdRes.obtenida_en ? new Date(bdRes.obtenida_en).toISOString().split('T')[0] : ''
+
+    if (obtenidaEnStr !== hoyStr) {
+      console.log(`[BCV] Tasa local es de fecha anterior (${obtenidaEnStr}). Forzando sincronización automática para hoy (${hoyStr})...`)
+      const syncRes = await sincronizarTasaBcv()
+      if (syncRes.success && syncRes.tasa) {
+        return {
+          success: true,
+          tasa: syncRes.tasa,
+          fecha_valor: syncRes.fecha_valor
+        }
+      }
+      // Si la sincronización falla (BCV caído), usamos la última conocida
+      console.warn('[BCV] Falló sincronización al día, usando última conocida.')
+    }
+
     return { 
       success: true, 
       tasa: bdRes.tasa,

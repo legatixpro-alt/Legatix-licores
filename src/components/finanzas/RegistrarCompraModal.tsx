@@ -27,6 +27,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
     numero_control: '',
     fecha_emision: new Date().toISOString().split('T')[0],
     condicion_pago: 'CONTADO',
+    dias_credito: '15',
     total_factura: ''
   })
 
@@ -47,6 +48,14 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
 
     const supabase = createClient()
     
+    // Calcular fecha de vencimiento si es a crédito
+    let fechaVencimiento = formData.fecha_emision
+    if (formData.condicion_pago === 'CREDITO') {
+      const fechaObj = new Date(formData.fecha_emision)
+      fechaObj.setDate(fechaObj.getDate() + parseInt(formData.dias_credito || '0'))
+      fechaVencimiento = fechaObj.toISOString().split('T')[0]
+    }
+    
     const payload = {
       empresa_id: empresaId,
       usuario_id: userId,
@@ -54,6 +63,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
       numero_factura: formData.numero_factura,
       numero_control: formData.numero_control,
       fecha_emision: formData.fecha_emision,
+      fecha_vencimiento: fechaVencimiento,
       condicion_pago: formData.condicion_pago,
       estatus: formData.condicion_pago === 'CONTADO' ? 'PAGADA' : 'PENDIENTE',
       total_factura: parseFloat(formData.total_factura),
@@ -109,7 +119,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Nº Factura</label>
+              <label className="text-sm font-medium text-muted-foreground">N° Factura</label>
               <Input 
                 name="numero_factura"
                 required
@@ -120,7 +130,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Nº Control</label>
+              <label className="text-sm font-medium text-muted-foreground">N° Control</label>
               <Input 
                 name="numero_control"
                 required
@@ -159,6 +169,23 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
             </div>
           </div>
 
+          {formData.condicion_pago === 'CREDITO' && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="text-sm font-medium text-muted-foreground">Días de Crédito (Plazo)</label>
+              <Input 
+                name="dias_credito"
+                type="number"
+                min="1"
+                required={formData.condicion_pago === 'CREDITO'}
+                value={formData.dias_credito}
+                onChange={handleChange}
+                className="bg-amber-500/10 border-amber-500/30 text-amber-50 focus-visible:ring-amber-500"
+                placeholder="Ej: 15"
+              />
+              <p className="text-[11px] text-muted-foreground">La fecha de vencimiento se calculará automáticamente sumando estos días a la fecha de emisión.</p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Monto Total (USD)</label>
             <div className="relative">
@@ -173,7 +200,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
                 required
                 value={formData.total_factura}
                 onChange={handleChange}
-                className="bg-white/5 border-white/10 pl-7"
+                className="bg-white/5 border-white/10 pl-7 font-bold text-lg"
                 placeholder="0.00"
               />
             </div>
@@ -183,7 +210,7 @@ export function RegistrarCompraModal({ open, onClose, onSuccess, empresaId, user
             <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="bg-transparent border-white/10">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground">
+            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground font-bold">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Registrar Compra
             </Button>

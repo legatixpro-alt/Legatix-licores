@@ -8,6 +8,7 @@ export async function emitirFacturaPOS(data: {
   empresa_id: string
   cliente_id: string | null
   usuario_id: string
+  turno_id?: string
   condicion_pago: string
   moneda_principal: MonedaPago
   tasa_bcv: number
@@ -36,6 +37,7 @@ export async function emitirFacturaPOS(data: {
     empresa_id: data.empresa_id,
     cliente_id: data.cliente_id,
     usuario_id: data.usuario_id,
+    turno_id: data.turno_id,
     tipo_documento: 'FACTURA',
     condicion_pago: data.condicion_pago,
     moneda_principal: data.moneda_principal,

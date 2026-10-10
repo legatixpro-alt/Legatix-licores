@@ -34,7 +34,8 @@ export default async function DashboardPage() {
   const hace30DiasStr = hace30Dias.toISOString().split('T')[0]
 
   // Todas las queries del dashboard en paralelo
-  const [facturasHoyRes, pagosDataRes, productosStockBajoRes, cxcFacturasRes, cxpFacturasRes, facturas30DiasRes] = await Promise.all([
+  const [predictivasRes, facturasHoyRes, pagosDataRes, productosStockBajoRes, cxcFacturasRes, cxpFacturasRes, facturas30DiasRes] = await Promise.all([
+    supabase.rpc('obtener_alertas_predictivas', { p_empresa_id: user.empresa_id }),
     supabase
       .from('facturas')
       .select('total_usd, total_ves, estatus')
@@ -117,24 +118,28 @@ export default async function DashboardPage() {
           value={formatUSD(totalUSD)}
           icon={<DollarSign className="h-4 w-4 text-primary" />}
           trend="Total facturado hoy en divisas"
+          href="/facturacion"
         />
         <MetricCard
           title="Facturación (VES)"
           value={formatVES(totalVES)}
           icon={<TrendingUp className="h-4 w-4 text-primary" />}
           trend="Total facturado hoy en bolívares"
+          href="/facturacion"
         />
         <MetricCard
           title="Documentos"
           value={cantidadFacturas.toString()}
           icon={<ShoppingBag className="h-4 w-4 text-primary" />}
           trend="Facturas emitidas exitosamente"
+          href="/facturacion"
         />
         <MetricCard
           title="Alertas de Stock"
           value={`${productosStockBajo?.length || 0} ítems`}
           icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
           trend="Productos en límite mínimo"
+          href="/inventario"
         />
         <MetricCard
           title="Por Cobrar (CxC)"
@@ -244,6 +249,32 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alertas Predictivas Inteligentes */}
+      {predictivasRes.data && predictivasRes.data.length > 0 && (
+        <div className="mt-8 mb-4">
+          <h2 className="text-lg font-bold tracking-tight mb-4 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Motor Analítico Predictivo (Recomendaciones)
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {predictivasRes.data.map((alerta: any, i: number) => (
+              <div key={i} className={`p-4 rounded-xl border ${alerta.tipo === 'ESTANCADO' ? 'bg-slate-50 border-slate-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-bold text-sm text-foreground">{alerta.nombre_producto}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{alerta.mensaje}</p>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ml-2 ${alerta.tipo === 'ESTANCADO' ? 'bg-slate-200 text-slate-700' : 'bg-amber-200 text-amber-700'}`}>
+                    {alerta.tipo === 'ESTANCADO' ? `${Number(alerta.dato_numerico)} días estancado` : `¡Alta rotación!`}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -254,15 +285,15 @@ function MetricCard({ title, value, icon, trend, href }: { title: string, value:
   const CardContentCustom = (
     <Card className="glass-card border-border/50 relative overflow-hidden group shadow-lg h-full transition-colors hover:border-primary/50">
       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
-        <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">{title}</CardTitle>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 px-5 pt-5">
+        <CardTitle className="text-[11px] leading-tight font-bold uppercase tracking-wider text-muted-foreground mr-2">{title}</CardTitle>
         <div className="p-2 bg-black/50 rounded-lg border border-white/5 shadow-[0_0_10px_rgba(245,176,39,0.1)] group-hover:shadow-[0_0_15px_rgba(245,176,39,0.3)] group-hover:border-primary/40 transition-all flex-shrink-0">
           {icon}
         </div>
       </CardHeader>
       <CardContent className="px-5 pb-5">
         <div className="text-2xl font-extrabold tracking-tight text-foreground drop-shadow-sm truncate">{value}</div>
-        <p className="text-[11px] font-medium text-muted-foreground/80 mt-1 truncate">
+        <p className="text-[11px] leading-tight font-medium text-muted-foreground/80 mt-1">
           {trend}
         </p>
       </CardContent>

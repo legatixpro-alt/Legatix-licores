@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { getSyncQueue } from '@/lib/offline-db'
 
+import { processSyncQueue } from '@/lib/sync-manager'
+
 export function useNetwork() {
   const [isOnline, setIsOnline] = useState<boolean>(true)
   const [pendingCount, setPendingCount] = useState<number>(0)
@@ -12,6 +14,12 @@ export function useNetwork() {
     try {
       const queue = await getSyncQueue()
       setPendingCount(queue.length)
+      if (typeof navigator !== 'undefined' && navigator.onLine && queue.length > 0) {
+        await processSyncQueue()
+        // Refresh again after sync attempt
+        const newQueue = await getSyncQueue()
+        setPendingCount(newQueue.length)
+      }
     } catch (e) {
       console.error(e)
     }

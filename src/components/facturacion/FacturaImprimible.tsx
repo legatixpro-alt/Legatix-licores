@@ -18,10 +18,10 @@ export function FacturaImprimible({ factura, empresa, config }: Props) {
   }, [])
 
   const tipoLabel = {
-    FACTURA: 'FACTURA',
+    FACTURA: 'NOTA DE ENTREGA',
     NOTA_CREDITO: 'NOTA DE CRÉDITO',
     NOTA_DEBITO: 'NOTA DE DÉBITO',
-  }[factura.tipo_documento]
+  }[factura.tipo_documento] || 'NOTA DE ENTREGA'
 
   const itemsOrdenados = [...factura.items].sort((a, b) => a.orden - b.orden)
 
