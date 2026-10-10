@@ -355,62 +355,65 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId }: Props) 
           items.map(item => (
             <div
               key={item.id}
-              className="group rounded-xl border border-border bg-card p-3 transition-colors hover:border-border/80"
+              className="group rounded-lg border border-border bg-card px-2.5 py-2 transition-colors hover:border-border/80"
             >
-              {/* Name + price row */}
-              <div className="flex justify-between items-start gap-2">
-                <p className="font-medium text-sm leading-tight line-clamp-2 flex-1 text-foreground">
+              {/* Name + delete row */}
+              <div className="flex justify-between items-start gap-2 mb-1.5">
+                <p className="font-medium text-xs leading-tight line-clamp-2 flex-1 text-foreground">
                   {item.nombre}
                 </p>
-                <span className="font-bold text-sm text-primary flex-shrink-0">
-                  {formatUSD(item.precio_unitario_usd * item.cantidad)}
-                </span>
+                <button
+                  className="h-5 w-5 flex-shrink-0 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors -mr-1 -mt-0.5"
+                  onClick={() => removeItem(item.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
 
-              {/* Tags */}
+              {/* Tags (if any) */}
               {(item.aplica_alicuota_adicional || item.tipo_alicuota === 'EXENTO') && (
-                <div className="flex gap-1.5 mt-1.5">
+                <div className="flex gap-1.5 mb-1.5">
                   {item.aplica_alicuota_adicional && (
-                    <span className="text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[9px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1 py-0 rounded">
                       Licor
                     </span>
                   )}
                   {item.tipo_alicuota === 'EXENTO' && (
-                    <span className="text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[9px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 py-0 rounded">
                       Exento
                     </span>
                   )}
                 </div>
               )}
 
-              {/* Qty controls + delete */}
-              <div className="flex items-center justify-between mt-2.5">
-                <div className="flex items-center gap-0 bg-secondary rounded-lg border border-border overflow-hidden">
+              {/* Qty controls + price */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center bg-secondary rounded border border-border overflow-hidden">
                   <button
-                    className="h-7 w-7 flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                    className="h-6 w-6 flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => updateQuantity(item.id, -1)}
                   >
                     <Minus className="h-3 w-3" />
                   </button>
-                  <span className="w-8 text-center text-sm font-semibold text-foreground">
+                  <span className="w-7 text-center text-xs font-bold text-foreground">
                     {item.cantidad}
                   </span>
                   <button
-                    className="h-7 w-7 flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                    className="h-6 w-6 flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => updateQuantity(item.id, 1)}
                   >
                     <Plus className="h-3 w-3" />
                   </button>
                 </div>
-                <span className="text-[11px] text-muted-foreground">
-                  {formatUSD(item.precio_unitario_usd)}/u
-                </span>
-                <button
-                  className="h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  onClick={() => removeItem(item.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatUSD(item.precio_unitario_usd)} c/u
+                  </span>
+                  <span className="font-bold text-sm text-primary">
+                    {formatUSD(item.precio_unitario_usd * item.cantidad)}
+                  </span>
+                </div>
               </div>
             </div>
           ))

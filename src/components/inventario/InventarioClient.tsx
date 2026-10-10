@@ -42,10 +42,16 @@ export function InventarioClient({ initialData, empresaId }: Props) {
     id: string; nombre: string; stock_actual: number
   } | null>(null)
 
-  const filteredData = initialData.filter(p =>
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false)
+  const [selectedProductToEdit, setSelectedProductToEdit] = useState<Producto | null>(null)
+
+  const filteredData = initialData.filter(p => {
+    const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())
+    if (showLowStockOnly) {
+      return matchesSearch && p.stock_actual <= p.stock_minimo && p.activo
+    }
+    return matchesSearch
+  })
 
   const stockBajo = initialData.filter(p => p.stock_actual <= p.stock_minimo && p.activo).length
   const totalProductos = initialData.filter(p => p.activo).length
@@ -56,6 +62,16 @@ export function InventarioClient({ initialData, empresaId }: Props) {
     setKardexOpen(true)
   }
 
+  const handleEdit = (producto: Producto) => {
+    setSelectedProductToEdit(producto)
+    setIsDialogOpen(true)
+  }
+
+  const handleCreate = () => {
+    setSelectedProductToEdit(null)
+    setIsDialogOpen(true)
+  }
+
   return (
     <div className="space-y-5">
 
@@ -63,7 +79,7 @@ export function InventarioClient({ initialData, empresaId }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         {/* Total Productos */}
-        <Card className="glass-card border-border/50 relative overflow-hidden group">
+        <Card className="glass-card border-border/50 relative overflow-hidden group cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setShowLowStockOnly(false)}>
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
             <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">Total Productos</CardTitle>
@@ -77,7 +93,7 @@ export function InventarioClient({ initialData, empresaId }: Props) {
         </Card>
 
         {/* Licores */}
-        <Card className="glass-card border-border/50 relative overflow-hidden group">
+        <Card className="glass-card border-border/50 relative overflow-hidden group cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setShowLowStockOnly(false)}>
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
             <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">Licores</CardTitle>
@@ -91,7 +107,10 @@ export function InventarioClient({ initialData, empresaId }: Props) {
         </Card>
 
         {/* Stock Bajo */}
-        <Card className="glass-card border-border/50 relative overflow-hidden group">
+        <Card 
+          className={`glass-card relative overflow-hidden group cursor-pointer transition-colors ${showLowStockOnly ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-border/50 hover:border-red-500/50'}`}
+          onClick={() => setShowLowStockOnly(!showLowStockOnly)}
+        >
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-5 pt-5">
             <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate mr-2">Stock Bajo</CardTitle>
@@ -119,7 +138,7 @@ export function InventarioClient({ initialData, empresaId }: Props) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+        <Button onClick={handleCreate} className="gap-2">
           <Plus className="h-4 w-4" />
           Nuevo Producto
         </Button>
@@ -224,6 +243,7 @@ export function InventarioClient({ initialData, empresaId }: Props) {
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                           title="Editar"
+                          onClick={() => handleEdit(producto)}
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -237,7 +257,12 @@ export function InventarioClient({ initialData, empresaId }: Props) {
         </Table>
       </div>
 
-      <ProductoFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} empresaId={empresaId} />
+      <ProductoFormDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        empresaId={empresaId} 
+        initialProduct={selectedProductToEdit} 
+      />
       <KardexFormDialog open={kardexOpen} onOpenChange={setKardexOpen} producto={selectedProduct} />
     </div>
   )
