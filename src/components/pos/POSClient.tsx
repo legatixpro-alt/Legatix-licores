@@ -262,6 +262,7 @@ export function POSClient({ initialProducts: serverProducts, categorias: serverC
               empresaId={empresaId}
               userId={userId}
               turnoId={currentTurnoId || undefined}
+              initialBcvRate={initialBcvRate}
               onVentaExitosa={handleVentaExitosa}
             />
           )}

@@ -1,3 +1,4 @@
+import { getTasaBcv } from '@/app/actions/bcv';
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/user-context'
 import { createClient } from '@/lib/supabase/server'
@@ -24,10 +25,11 @@ export default async function POSPage() {
   let productos: Producto[] = []
   let configFiscal: ConfigFiscal | null = null
   let categorias: Categoria[] = []
-  let turnoActivoId: string | null = null
+  let turnoActivoId: string | null = null;
+  let initialBcvRate = 40.00;
 
   try {
-    const [resClientes, resProductos, resConfig, resCategorias, resTurno] = await Promise.all([
+    const [resClientes, resProductos, resConfig, resCategorias, resTurno, bcvRes] = await Promise.all([
       supabase
         .from('clientes')
         .select('*')
@@ -57,14 +59,17 @@ export default async function POSPage() {
         .select('id')
         .eq('usuario_id', user.id)
         .eq('estatus', 'ABIERTO')
-        .maybeSingle()
+        .order('fecha_apertura', { ascending: false })
+        .limit(1),
+      getTasaBcv()
     ])
     
     clientes = resClientes.data as Cliente[] || []
     productos = resProductos.data as Producto[] || []
     configFiscal = resConfig.data as ConfigFiscal || null
     categorias = resCategorias.data as Categoria[] || []
-    turnoActivoId = resTurno.data?.id || null
+    turnoActivoId = resTurno.data && resTurno.data.length > 0 ? resTurno.data[0].id : null;
+    if (bcvRes.tasa) initialBcvRate = bcvRes.tasa;
   } catch (error) {
     console.error('Error cargando datos del POS (Posiblemente Offline):', error)
     // Dejar arreglos vacíos. POSClient intentará hidratar desde IndexedDB.
@@ -100,6 +105,7 @@ export default async function POSPage() {
         empresaId={user.empresa_id}
         userId={user.id}
         turnoActivoId={turnoActivoId}
+        initialBcvRate={initialBcvRate}
       />
     </div>
   )

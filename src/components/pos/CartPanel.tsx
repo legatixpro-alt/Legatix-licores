@@ -25,9 +25,10 @@ interface Props {
   userId: string
   turnoId?: string
   onVentaExitosa?: (items: any[]) => void
+  initialBcvRate?: number
 }
 
-export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, onVentaExitosa }: Props) {
+export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, onVentaExitosa, initialBcvRate = 40 }: Props) {
   const { 
     items, 
     removeItem, 
@@ -106,7 +107,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, 
   )
 
   // ── Tasa BCV ──────────────────────────────────────────────────────
-  const [tasaBcv, setTasaBcv] = useState<number>(40.00)
+  const [tasaBcv, setTasaBcv] = useState<number>(initialBcvRate)
   const [isFetchingBcv, setIsFetchingBcv] = useState(false)
 
   const fetchBcvRate = async () => {
@@ -289,7 +290,9 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, 
       
       <CierreCajaModal 
         open={cierreCajaOpen} 
+        turnoId={turnoId}
         onClose={() => setCierreCajaOpen(false)} 
+        onSuccess={() => window.location.reload()}
       />
 
       {/* ── Cliente selector ───────────────────────── */}

@@ -16,8 +16,8 @@ interface Props {
 
 export function AperturaCajaModal({ open, empresaId, onSuccess }: Props) {
   const [isProcessing, setIsProcessing] = useState(false)
-  const [efectivoVes, setEfectivoVes] = useState('0')
-  const [efectivoUsd, setEfectivoUsd] = useState('0')
+  const [efectivoVes, setEfectivoVes] = useState('')
+  const [efectivoUsd, setEfectivoUsd] = useState('')
   const supabase = createClient()
 
   const handleApertura = async () => {
@@ -29,8 +29,8 @@ export function AperturaCajaModal({ open, empresaId, onSuccess }: Props) {
       const { data, error } = await supabase.from('cajas_turnos').insert({
         empresa_id: empresaId,
         usuario_id: userData.user.id,
-        monto_apertura_ves: parseFloat(efectivoVes || '0'),
-        monto_apertura_usd: parseFloat(efectivoUsd || '0'),
+        monto_apertura_ves: parseFloat(efectivoVes || '0') || 0,
+        monto_apertura_usd: parseFloat(efectivoUsd || '0') || 0,
         estatus: 'ABIERTO'
       }).select('id').single()
 

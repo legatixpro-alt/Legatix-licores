@@ -7,23 +7,36 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { impresoraFiscal } from '@/lib/impresora-fiscal'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   open: boolean
+  turnoId?: string
   onClose: () => void
   onSuccess?: () => void
 }
 
-export function CierreCajaModal({ open, onClose, onSuccess }: Props) {
+export function CierreCajaModal({ open, turnoId, onClose, onSuccess }: Props) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [efectivoVesDeclarado, setEfectivoVesDeclarado] = useState('')
   const [efectivoUsdDeclarado, setEfectivoUsdDeclarado] = useState('')
+  const supabase = createClient()
 
   const handleCierre = async () => {
     setIsProcessing(true)
     try {
-      // 1. Simular validación y guardado en base de datos del cuadre de caja
-      await new Promise(res => setTimeout(res, 1000))
+      // 1. Validar y guardado en base de datos del cuadre de caja
+      if (turnoId) {
+        await supabase
+          .from('cajas_turnos')
+          .update({
+            estatus: 'CERRADO',
+            fecha_cierre: new Date().toISOString(),
+            monto_cierre_ves_declarado: parseFloat(efectivoVesDeclarado || '0') || 0,
+            monto_cierre_usd_declarado: parseFloat(efectivoUsdDeclarado || '0') || 0
+          })
+          .eq('id', turnoId)
+      }
       
       // 2. Disparar el comando del Reporte Z a la impresora fiscal (la cual totaliza e imprime)
       // En una impresora real, este comando saca el reporte físico y blanquea las memorias diarias.
