@@ -55,7 +55,7 @@ export function KardexFormDialog({ producto, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] bg-black/95 border-white/10 text-white backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle>Ajuste de Stock</DialogTitle>
           <DialogDescription>
@@ -66,25 +66,25 @@ export function KardexFormDialog({ producto, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4 pt-2">
-          {error && <p className="text-sm text-red-500 bg-red-50 p-2 rounded">{error}</p>}
+          {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 p-2 rounded">{error}</p>}
 
           <div className="space-y-2">
-            <Label>Tipo de Movimiento</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Tipo de Movimiento</Label>
             <select
               required
               value={tipo}
               onChange={e => setTipo(e.target.value as TipoMovimientoKardex)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:ring-black"
+              className="w-full flex h-10 items-center justify-between rounded-md border bg-white/5 border-white/10 px-3 py-2 text-sm text-white focus:outline-none"
             >
-              <option value="entrada">Entrada (+)</option>
-              <option value="salida">Salida (-)</option>
-              <option value="merma">Merma/Daño (-)</option>
-              <option value="ajuste">Ajuste Libre</option>
+              <option value="entrada" className="bg-zinc-900 text-white">Entrada (+)</option>
+              <option value="salida" className="bg-zinc-900 text-white">Salida (-)</option>
+              <option value="merma" className="bg-zinc-900 text-white">Merma/Daño (-)</option>
+              <option value="ajuste" className="bg-zinc-900 text-white">Ajuste Libre</option>
             </select>
           </div>
 
           <div className="space-y-2">
-            <Label>Cantidad</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Cantidad</Label>
             <Input 
               type="number" 
               required
@@ -95,7 +95,7 @@ export function KardexFormDialog({ producto, open, onOpenChange }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label>Motivo / Observación</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Motivo / Observación</Label>
             <Input 
               required
               value={motivo}
@@ -105,8 +105,8 @@ export function KardexFormDialog({ producto, open, onOpenChange }: Props) {
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading} className="bg-black text-white hover:bg-gray-800">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="bg-transparent border-white/10">Cancelar</Button>
+            <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground font-bold hover:bg-primary/90">
               {loading ? 'Guardando...' : 'Registrar Movimiento'}
             </Button>
           </div>

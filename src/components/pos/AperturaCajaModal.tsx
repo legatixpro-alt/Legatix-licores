@@ -48,7 +48,7 @@ export function AperturaCajaModal({ open, empresaId, onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={() => {}}> 
       {/* No permitimos cerrar clickeando fuera, es OBLIGATORIO abrir caja */}
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Apertura de Caja</DialogTitle>
           <DialogDescription>
