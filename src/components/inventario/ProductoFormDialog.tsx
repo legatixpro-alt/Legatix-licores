@@ -68,7 +68,53 @@ export function ProductoFormDialog({ open, onOpenChange, empresaId, initialProdu
     }
   })
 
-
+  useEffect(() => {
+    if (open) {
+      if (initialProduct) {
+        reset({
+          codigo_sku: initialProduct.codigo_sku || '',
+          nombre: initialProduct.nombre || '',
+          descripcion: initialProduct.descripcion || '',
+          categoria_id: initialProduct.categoria_id || null,
+          proveedor_id: initialProduct.proveedor_id || null,
+          unidad_medida: initialProduct.unidad_medida || 'UNIDAD',
+          precio_costo: initialProduct.precio_costo ?? 0,
+          precio_venta: initialProduct.precio_venta ?? 0,
+          precio_venta_usd: initialProduct.precio_venta_usd ?? 0,
+          stock_actual: initialProduct.stock_actual ?? 0,
+          stock_minimo: initialProduct.stock_minimo ?? 5,
+          es_licor: initialProduct.es_licor ?? false,
+          es_promo: initialProduct.es_promo ?? false,
+          volumen_litros: initialProduct.volumen_litros ?? null,
+          grado_alcoholico: initialProduct.grado_alcoholico ?? null,
+          gravado_iva: initialProduct.gravado_iva ?? true,
+          alicuota_iva: initialProduct.alicuota_iva ?? 16,
+          activo: initialProduct.activo ?? true
+        })
+      } else {
+        reset({
+          codigo_sku: '',
+          nombre: '',
+          descripcion: '',
+          categoria_id: null,
+          proveedor_id: null,
+          unidad_medida: 'UNIDAD',
+          precio_costo: 0,
+          precio_venta: 0,
+          precio_venta_usd: 0,
+          stock_actual: 0,
+          stock_minimo: 5,
+          es_licor: false,
+          es_promo: false,
+          volumen_litros: null,
+          grado_alcoholico: null,
+          gravado_iva: true,
+          alicuota_iva: 16,
+          activo: true
+        })
+      }
+    }
+  }, [open, initialProduct, reset])
 
   const onSubmit = async (data: ProductoFormValues) => {
     setLoading(true)

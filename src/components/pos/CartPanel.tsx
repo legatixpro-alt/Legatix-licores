@@ -107,14 +107,14 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, 
   )
 
   // ── Tasa BCV ──────────────────────────────────────────────────────
-  const [tasaBcv, setTasaBcv] = useState<number>(initialBcvRate)
+  const [tasaBcv, setTasaBcv] = useState<number>(Math.round(Number(initialBcvRate) * 100) / 100)
   const [isFetchingBcv, setIsFetchingBcv] = useState(false)
 
   const fetchBcvRate = async () => {
     setIsFetchingBcv(true)
     const res = await getTasaBcv()
     if (res.success && res.tasa) {
-      setTasaBcv(res.tasa)
+      setTasaBcv(Math.round(Number(res.tasa) * 100) / 100)
     }
     setIsFetchingBcv(false)
   }
@@ -123,7 +123,7 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, 
     setIsFetchingBcv(true)
     const res = await forceSyncTasaBcv()
     if (res.success && res.tasa) {
-      setTasaBcv(res.tasa)
+      setTasaBcv(Math.round(Number(res.tasa) * 100) / 100)
     }
     setIsFetchingBcv(false)
   }
@@ -447,9 +447,10 @@ export function CartPanel({ clientes, configFiscal, empresaId, userId, turnoId, 
             <input
               type="number"
               step="0.01"
-              className="w-16 h-6 text-right bg-transparent outline-none font-bold text-foreground focus:text-primary transition-colors"
+              className="w-20 h-6 text-right bg-transparent outline-none font-bold text-foreground focus:text-primary transition-colors"
               value={tasaBcv || ''}
               onChange={e => setTasaBcv(parseFloat(e.target.value) || 0)}
+              onBlur={() => setTasaBcv(prev => Math.round((prev || 0) * 100) / 100)}
             />
           </div>
         </div>

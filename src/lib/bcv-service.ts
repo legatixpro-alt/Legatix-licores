@@ -59,7 +59,8 @@ export async function sincronizarTasaBcv() {
     if (!strongMatch) throw new Error('No se encontró la etiqueta strong con la tasa del Dólar')
     
     const tasaStr = strongMatch[1].replace(',', '.')
-    const tasaUsd = parseFloat(tasaStr)
+    const rawTasa = parseFloat(tasaStr)
+    const tasaUsd = Math.round(rawTasa * 100) / 100
     
     if (isNaN(tasaUsd) || tasaUsd <= 0) throw new Error(`Tasa extraída es inválida: ${tasaStr}`)
 
@@ -86,12 +87,7 @@ export async function sincronizarTasaBcv() {
       }, { onConflict: 'fecha_valor' })
 
     if (error) {
-      // Si la tabla no existe aún, ignoramos el error de BD pero retornamos la tasa
-      if (error.code === '42P01') {
-        console.warn('[BCV] La tabla tasas_bcv no existe aún. Omitiendo guardado en BD.')
-      } else {
-        throw new Error(`Error guardando en base de datos: ${error.message}`)
-      }
+      console.warn(`[BCV] Aviso al persistir en BD: ${error.message}. Continuando con la tasa en vivo obtenida.`)
     } else {
       console.log('[BCV] Tasa guardada exitosamente en la BD.')
     }

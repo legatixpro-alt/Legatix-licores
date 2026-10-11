@@ -122,13 +122,13 @@ export function FacturaImprimible({ factura, empresa, config }: Props) {
             DATOS DEL ADQUIRENTE
         ══════════════════════════════════════ */}
         <div style={{ marginBottom: '10px', fontSize: '8pt' }}>
-          <p style={{ margin: '2px 0' }}><span className="bold">Cliente:</span> {factura.cliente.razon_social}</p>
-          <p style={{ margin: '2px 0' }}><span className="bold">{factura.cliente.tipo_doc}:</span> {factura.cliente.numero_doc}</p>
-          {factura.cliente.direccion_fiscal && (
+          <p style={{ margin: '2px 0' }}><span className="bold">Cliente:</span> {factura.cliente?.razon_social ?? 'CONSUMIDOR FINAL'}</p>
+          <p style={{ margin: '2px 0' }}><span className="bold">{factura.cliente?.tipo_doc ?? 'V'}:</span> {factura.cliente?.numero_doc ?? '00000000'}</p>
+          {factura.cliente?.direccion_fiscal && (
             <p style={{ margin: '2px 0' }}><span className="bold">Dir:</span> {factura.cliente.direccion_fiscal}</p>
           )}
           <p style={{ margin: '2px 0' }}><span className="bold">Condición:</span> {factura.condicion_pago}</p>
-          <p style={{ margin: '2px 0' }}><span className="bold">Tasa BCV:</span> Bs. {Number(factura.tasa_bcv).toFixed(4)}</p>
+          <p style={{ margin: '2px 0' }}><span className="bold">Tasa BCV:</span> Bs. {Number(factura.tasa_bcv).toFixed(2)}</p>
           
           {factura.numero_factura_ref && (
             <p style={{ margin: '4px 0', fontSize: '8pt' }}>

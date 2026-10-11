@@ -32,7 +32,7 @@ export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; f
 
     return { 
       success: true, 
-      tasa: bdRes.tasa,
+      tasa: Math.round(Number(bdRes.tasa) * 100) / 100,
       fecha_valor: bdRes.fecha_valor
     }
   }
@@ -44,7 +44,7 @@ export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; f
   if (syncRes.success && syncRes.tasa) {
     return {
       success: true,
-      tasa: syncRes.tasa,
+      tasa: Math.round(Number(syncRes.tasa) * 100) / 100,
       fecha_valor: syncRes.fecha_valor
     }
   }
@@ -53,7 +53,7 @@ export async function getTasaBcv(): Promise<{ success: boolean; tasa?: number; f
   return { 
     success: false, 
     error: syncRes.error || 'No se pudo obtener la tasa BCV',
-    tasa: 36.5 // Fallback de emergencia, aunque el UI debería permitir editar
+    tasa: 876.80 // Fallback de emergencia coherente con la fecha actual
   }
 }
 

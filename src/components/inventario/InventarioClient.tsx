@@ -258,6 +258,7 @@ export function InventarioClient({ initialData, empresaId }: Props) {
       </div>
 
       <ProductoFormDialog 
+        key={selectedProductToEdit ? selectedProductToEdit.id : 'nuevo-producto'}
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
         empresaId={empresaId} 

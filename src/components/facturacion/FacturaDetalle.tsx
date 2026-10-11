@@ -96,10 +96,12 @@ export function FacturaDetalle({ factura, empresa, config }: Props) {
         <div className="p-6 grid grid-cols-2 gap-6 border-b border-gray-100">
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Adquirente</p>
-            <p className="font-bold text-gray-900">{factura.cliente.razon_social}</p>
-            <p className="text-sm text-gray-600">{factura.cliente.tipo_doc}-{factura.cliente.numero_doc}</p>
-            {factura.cliente.direccion_fiscal && <p className="text-sm text-gray-500 mt-1">{factura.cliente.direccion_fiscal}</p>}
-            {factura.cliente.es_contribuyente_especial && (
+            <p className="font-bold text-gray-900">{factura.cliente?.razon_social ?? 'CONSUMIDOR FINAL'}</p>
+            <p className="text-sm text-gray-600">
+              {factura.cliente ? `${factura.cliente.tipo_doc}-${factura.cliente.numero_doc}` : 'NO CONTRIBUYENTE'}
+            </p>
+            {factura.cliente?.direccion_fiscal && <p className="text-sm text-gray-500 mt-1">{factura.cliente.direccion_fiscal}</p>}
+            {factura.cliente?.es_contribuyente_especial && (
               <p className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded mt-1 inline-block">
                 ⚠ Contribuyente Especial
               </p>
@@ -109,7 +111,7 @@ export function FacturaDetalle({ factura, empresa, config }: Props) {
             <InfoRow label="Fecha de Emisión" value={factura.fecha_emision} />
             <InfoRow label="Condición" value={factura.condicion_pago} />
             <InfoRow label="Moneda" value={MONEDA_LABELS[factura.moneda_principal] ?? factura.moneda_principal} />
-            <InfoRow label="Tasa BCV" value={`Bs. ${Number(factura.tasa_bcv).toFixed(4)}`} />
+            <InfoRow label="Tasa BCV" value={`Bs. ${Number(factura.tasa_bcv).toFixed(2)}`} />
             {factura.numero_factura_ref && (
               <InfoRow label="Ref. Factura" value={`${factura.numero_factura_ref} (${factura.fecha_factura_ref})`} />
             )}
