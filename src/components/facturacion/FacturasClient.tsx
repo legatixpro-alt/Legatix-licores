@@ -212,7 +212,7 @@ export function FacturasClient({ facturas, configFiscal, empresa }: Props) {
                   : 'bg-card/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
               }`}
             >
-              {t === 'TODOS' ? 'Todos Tipos' : t.replace('_', ' ')}
+              {t === 'TODOS' ? 'Todos Tipos' : (t === 'FACTURA' ? 'Notas de Entrega' : t.replace('_', ' '))}
             </button>
           ))}
         </div>
@@ -261,7 +261,7 @@ export function FacturasClient({ facturas, configFiscal, empresa }: Props) {
                           f.tipo_documento === 'NOTA_CREDITO' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
                           'bg-orange-500/10 text-orange-400 border-orange-500/20'
                         }`}>
-                          {f.tipo_documento.replace('_', ' ')}
+                          {f.tipo_documento === 'FACTURA' ? 'NOTA DE ENTREGA' : f.tipo_documento.replace('_', ' ')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{f.fecha_emision}</td>

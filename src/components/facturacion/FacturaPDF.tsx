@@ -52,7 +52,7 @@ export function FacturaPDF({ factura, configFiscal }: { factura: FacturaConRelac
             )}
           </View>
           <View style={[styles.infoCol, { alignItems: 'flex-end' }]}>
-            <Text><Text style={styles.label}>{factura.tipo_documento}:</Text> {factura.numero_factura}</Text>
+            <Text><Text style={styles.label}>{factura.tipo_documento === 'FACTURA' ? 'NOTA DE ENTREGA' : factura.tipo_documento}:</Text> {factura.numero_factura}</Text>
             <Text><Text style={styles.label}>Control:</Text> {factura.numero_control}</Text>
             <Text><Text style={styles.label}>Fecha:</Text> {factura.fecha_emision}</Text>
             <Text><Text style={styles.label}>Moneda:</Text> {factura.moneda_principal} (Tasa: Bs. {factura.tasa_bcv})</Text>

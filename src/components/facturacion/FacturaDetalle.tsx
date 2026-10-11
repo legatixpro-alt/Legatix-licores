@@ -17,10 +17,10 @@ export function FacturaDetalle({ factura, empresa, config }: Props) {
   const router = useRouter()
 
   const tipoLabel = {
-    FACTURA: 'FACTURA',
+    FACTURA: 'NOTA DE ENTREGA',
     NOTA_CREDITO: 'NOTA DE CRÉDITO',
     NOTA_DEBITO: 'NOTA DE DÉBITO',
-  }[factura.tipo_documento]
+  }[factura.tipo_documento] || 'NOTA DE ENTREGA'
 
   const estatusStyle = {
     EMITIDA:  'bg-blue-100 text-blue-700',
@@ -139,7 +139,6 @@ export function FacturaDetalle({ factura, empresa, config }: Props) {
                   <td className="py-2.5 text-xs text-gray-400">{item.orden}</td>
                   <td className="py-2.5">
                     <p className="font-medium text-gray-900">{item.descripcion}</p>
-                    {item.codigo_sku && <p className="text-xs text-gray-400">{item.codigo_sku}</p>}
                     {item.codigo_sku && <p className="text-xs text-gray-400">{item.codigo_sku}</p>}
                   </td>
                   <td className="py-2.5 text-center text-gray-700">{Number(item.cantidad).toFixed(item.unidad_medida === 'UNIDAD' ? 0 : 3)} {item.unidad_medida}</td>
